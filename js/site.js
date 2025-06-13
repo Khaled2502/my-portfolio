@@ -1,199 +1,243 @@
-﻿// ==================== Theme Management ====================
-window.siteFunctions = window.siteFunctions || {};
+﻿// ======================================================
+// ==================== site.js ========================
+// ======================================================
 
-// Apply dark mode theme
-siteFunctions.applyDarkMode = function (isDark) {
-    document.documentElement.classList.toggle('dark-mode', isDark);
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-};
+// استيراد الأدوات المساعدة من ملف helpers.js
+import { ThemeManager, StorageHelper } from './helpers.js';
 
-// Initialize theme from storage or system preference
-siteFunctions.initTheme = function () {
-    const savedTheme = localStorage.getItem('theme');
+// ==================== إدارة الثيم (الوضع الداكن/الفاتح) ====================
+const SiteTheme = {
+  // تطبيق الثيم المحدد
+  apply(isDark) {
+    // استخدام ThemeManager لتطبيق الثيم
+    ThemeManager.apply(isDark);
+    // حفظ الإعداد في localStorage
+    StorageHelper.set('theme', isDark ? 'dark' : 'light');
+  },
+  
+  // تهيئة الثيم عند تحميل الصفحة
+  init() {
+    // جلب الثيم المحفوظ
+    const savedTheme = StorageHelper.get('theme');
+    // التحقق من تفضيلات النظام للوضع الداكن
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // تحديد الثيم بناء على الإعدادات المحفوظة أو تفضيل النظام
     const isDark = savedTheme ? savedTheme === 'dark' : systemPrefersDark;
-    siteFunctions.applyDarkMode(isDark);
+    // تطبيق الثيم المحدد
+    this.apply(isDark);
+  }
 };
 
-// ==================== Initialization ====================
-window.addEventListener('load', function () {
-    // Initialize theme
-    siteFunctions.initTheme();
+// ==================== تأثير الكتابة الآلية ====================
+// دالة لإنشاء تأثير الكتابة الآلية
+const createTypingAnimation = (config) => {
+  // حالة التأثير
+  const state = {
+    phraseIndex: 0,       // مؤشر الجملة الحالية
+    charIndex: 0,         // مؤشر الحرف الحالي
+    isDeleting: false,    // هل في مرحلة المسح؟
+    isActive: true,       // هل التأثير نشط؟
+    timeoutRef: null,     // مؤقت التأثير
+    currentLanguage: 'EN' // اللغة الحالية
+  };
 
-    // Initialize typing effect with default language
-    const savedLang = localStorage.getItem('lang') || 'EN';
-    if (typeof CodeTypingAnimation !== 'undefined') {
-        CodeTypingAnimation.init(savedLang);
+  let textElement = null; // العنصر الذي يعرض النص
+
+  // دالة تنفيذ التأثير
+  const type = () => {
+    if (!state.isActive || !textElement) return;
+
+    // جلب الجمل الخاصة باللغة الحالية
+    const phrases = config.phrases[state.currentLanguage] || config.phrases.EN;
+    const currentPhrase = phrases[state.phraseIndex];
+    
+    // بناء النص المرئي بناء على مرحلة الكتابة/المسح
+    let visibleText = state.isDeleting
+      ? currentPhrase.substring(0, state.charIndex - 1)
+      : currentPhrase.substring(0, state.charIndex + 1);
+
+    // عرض النص مع مؤشر الكتابة
+    textElement.textContent = visibleText + config.cursorChar;
+    // تحديث مؤشر الحرف
+    state.charIndex += state.isDeleting ? -1 : 1;
+
+    // التحكم في توقيت التأثير
+    if (!state.isDeleting && state.charIndex === currentPhrase.length) {
+      // الانتظار قبل البدء في المسح
+      state.timeoutRef = setTimeout(() => {
+        state.isDeleting = true;
+        type();
+      }, config.pauseBeforeDelete);
+    } else if (state.isDeleting && state.charIndex === 0) {
+      // الانتظار قبل البدء في جملة جديدة
+      state.timeoutRef = setTimeout(() => {
+        state.isDeleting = false;
+        state.phraseIndex = (state.phraseIndex + 1) % phrases.length;
+        type();
+      }, config.pauseBeforeType);
+    } else {
+      // تحديد السرعة بناء على مرحلة الكتابة/المسح
+      const speed = state.isDeleting ? config.deletingSpeed : config.typingSpeed;
+      state.timeoutRef = setTimeout(type, speed);
     }
-});
+  };
 
-// ==================== Code Typing Animation ====================
-const CodeTypingAnimation = (function () {
-    // Configuration
-    const config = {
-        elementId: 'code-typing-text',
-        phrases: {
-            EN: [
-                "console.log('Building the future of AEC with code and intelligence.');",
-                "print('Automating design workflows...');",
-                "RevitApi.CreateElement(Wall.BasicWall);",
-                "TeklaOpenAPI.Model.Model.CommitChanges();",
-                "print('Crafting elegant software solutions.');"
-            ],
-            AR: [
-                "console.log('بناء مستقبل صناعة البناء بالبرمجة والذكاء.');",
-                "print('أتمتة سير عمل التصميم...');",
-                "RevitApi.CreateElement(Wall.BasicWall);",
-                "TeklaOpenAPI.Model.Model.CommitChanges();",
-                "print('صنع حلول برمجية أنيقة.');"
-            ]
-        },
-        typingSpeed: 100,
-        deletingSpeed: 50,
-        pauseBeforeDelete: 1500,
-        pauseBeforeType: 500,
-        cursorChar: '▌'
-    };
+  // واجهة الاستخدام
+  return {
+    // تهيئة التأثير
+    init(lang = 'EN') {
+      // الحصول على العنصر الذي يعرض النص
+      textElement = document.getElementById(config.elementId);
+      if (!textElement) return;
 
-    // State
-    let state = {
+      // إعادة تعيين الحالة
+      clearTimeout(state.timeoutRef);
+      Object.assign(state, {
         phraseIndex: 0,
         charIndex: 0,
         isDeleting: false,
         isActive: true,
-        timeoutRef: null,
-        currentLanguage: 'EN'
-    };
-
-    // DOM Element
-    let textElement = null;
-
-    // Initialize
-    function init(lang = 'EN') {
-        textElement = document.getElementById(config.elementId);
-        if (!textElement) return;
-
-        // Clear existing animation
-        clearTimeout(state.timeoutRef);
-
-        // Reset state
-        state = {
-            phraseIndex: 0,
-            charIndex: 0,
-            isDeleting: false,
-            isActive: true,
-            timeoutRef: null,
-            currentLanguage: lang
-        };
-
-        // Start animation
-        type();
+        currentLanguage: lang
+      });
+      
+      // بدء التأثير
+      type();
+    },
+    
+    // تغيير اللغة
+    setLanguage(lang) {
+      if (lang !== state.currentLanguage) {
+        state.currentLanguage = lang;
+        this.init(lang);
+      }
     }
-
-    // Change language
-    function setLanguage(lang) {
-        if (lang !== state.currentLanguage) {
-            state.currentLanguage = lang;
-            // Restart animation with new phrases
-            init(lang);
-        }
-    }
-
-    // Typing function
-    function type() {
-        if (!state.isActive || !textElement) return;
-
-        const phrases = config.phrases[state.currentLanguage] || config.phrases.EN;
-        const currentPhrase = phrases[state.phraseIndex];
-        if (!currentPhrase) return;
-
-        let visibleText = state.isDeleting
-            ? currentPhrase.substring(0, state.charIndex - 1)
-            : currentPhrase.substring(0, state.charIndex + 1);
-
-        // Add cursor
-        visibleText += config.cursorChar;
-
-        textElement.textContent = visibleText;
-
-        // Update character position
-        state.charIndex = state.isDeleting ? state.charIndex - 1 : state.charIndex + 1;
-
-        // Determine timing for next step
-        let currentSpeed;
-        if (!state.isDeleting && state.charIndex === currentPhrase.length) {
-            // Finished typing - pause before deleting
-            currentSpeed = config.pauseBeforeDelete;
-            state.isDeleting = true;
-        } else if (state.isDeleting && state.charIndex === 0) {
-            // Finished deleting - move to next phrase
-            state.isDeleting = false;
-            state.phraseIndex = (state.phraseIndex + 1) % phrases.length;
-            currentSpeed = config.pauseBeforeType;
-        } else {
-            // Continue typing/deleting
-            currentSpeed = state.isDeleting ? config.deletingSpeed : config.typingSpeed;
-        }
-
-        // Schedule next step
-        state.timeoutRef = setTimeout(type, currentSpeed);
-    }
-
-    // Handle visibility changes
-    function handleVisibilityChange() {
-        state.isActive = !document.hidden;
-        if (state.isActive) type();
-    }
-
-    // Initialize visibility handler
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Public API
-    return {
-        init: init,
-        setLanguage: setLanguage
-    };
-})();
-
-// ==================== Navigation Management ====================
-siteFunctions.addNavCloseListener = function (dotNetRef) {
-    function handleDocumentClick(event) {
-        const nav = document.querySelector('.site-nav');
-        const toggle = document.querySelector('.navbar-toggler');
-
-        if (nav && toggle &&
-            !nav.contains(event.target) &&
-            !toggle.contains(event.target)) {
-            dotNetRef.invokeMethodAsync('CloseNav');
-            document.removeEventListener('click', handleDocumentClick);
-        }
-    }
-
-    // Add new listener
-    document.addEventListener('click', handleDocumentClick);
+  };
 };
 
-// ==================== Loading Progress ====================
-siteFunctions.simulateLoadingProgress = function (dotNetRef) {
+// إنشاء تأثير الكتابة الآلية مع الإعدادات المحددة
+const CodeTypingAnimation = createTypingAnimation({
+  elementId: 'code-typing-text', // ID العنصر المستهدف
+  phrases: { // الجمل المعروضة لكل لغة
+    EN: [
+      "console.log('Building the future of AEC with code and intelligence.');",
+      "print('Automating design workflows...');",
+      "RevitApi.CreateElement(Wall.BasicWall);",
+      "TeklaOpenAPI.Model.Model.CommitChanges();",
+      "print('Crafting elegant software solutions.');"
+    ],
+    AR: [
+      "console.log('بناء مستقبل صناعة البناء بالبرمجة والذكاء.');",
+      "print('أتمتة سير عمل التصميم...');",
+      "RevitApi.CreateElement(Wall.BasicWall);",
+      "TeklaOpenAPI.Model.Model.CommitChanges();",
+      "print('صنع حلول برمجية أنيقة.');"
+    ]
+  },
+  typingSpeed: 100,       // سرعة الكتابة
+  deletingSpeed: 50,      // سرعة المسح
+  pauseBeforeDelete: 1500, // وقت الانتظار قبل المسح
+  pauseBeforeType: 500,    // وقت الانتظار قبل الكتابة
+  cursorChar: '▌'         // شكل مؤشر الكتابة
+});
+
+// ==================== إدارة التنقل ====================
+const NavigationManager = {
+  // إضافة مستمع لإغلاق القائمة عند النقر خارجها
+  addCloseListener(dotNetRef) {
+    const handler = (event) => {
+      const nav = document.querySelector('.site-nav'); // القائمة
+      const toggle = document.querySelector('.navbar-toggler'); // زر التبديل
+
+      // إذا تم النقر خارج القائمة وزر التبديل
+      if (nav && toggle && 
+          !nav.contains(event.target) && 
+          !toggle.contains(event.target)) {
+        // إغلاق القائمة عبر Blazor
+        dotNetRef.invokeMethodAsync('CloseNav');
+        // إزالة المستمع
+        document.removeEventListener('click', handler);
+      }
+    };
+    // إضافة المستمع للنقر
+    document.addEventListener('click', handler);
+  }
+};
+
+// ==================== محاكاة التحميل ====================
+const LoadingSimulator = {
+  // محاكاة شريط التقدم
+  simulate(dotNetRef) {
     let progress = 0;
     const interval = setInterval(() => {
-        progress += 10;
-        dotNetRef.invokeMethodAsync('UpdateLoadingProgress', progress);
-        if (progress >= 100) clearInterval(interval);
+      // زيادة التقدم بنسبة 10% كل 200 مللي ثانية
+      progress = Math.min(progress + 10, 100);
+      // تحديث شريط التقدم عبر Blazor
+      dotNetRef.invokeMethodAsync('UpdateLoadingProgress', progress);
+      // إيقاف المحاكاة عند اكتمال التحميل
+      if (progress >= 100) clearInterval(interval);
     }, 200);
+  }
 };
 
-// ==================== LocalStorage Helpers ====================
-window.localStorageHelper = {
-    set: (key, value) => localStorage.setItem(key, value),
-    get: (key) => localStorage.getItem(key)
+// ==================== وظائف الموقع العامة ====================
+window.siteFunctions = {
+  initDefaults: function () {
+    // فقط امسح إعدادات الثيم، ولا تلمس اللغة
+    localStorage.removeItem('darkMode');
+    // Detect system theme
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    localStorage.setItem('darkMode', prefersDark);
+  },
+
+  applyDarkMode: function (isDark) {
+    // طبّق الكلاس على document.documentElement وليس body فقط
+    if (isDark) {
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+    }
+  },
+
+  // إصلاح initTheme ليكون دالة آمنة لا تعتمد على this
+  initTheme: function() {
+    try {
+      SiteTheme.init();
+    } catch (e) {
+      console.warn('Theme init error:', e);
+    }
+  },
+  addNavCloseListener: NavigationManager.addCloseListener,
+  simulateLoadingProgress: LoadingSimulator.simulate,
+  initCodeTypingEffect: (lang) => CodeTypingAnimation.init(lang),
+  setCodeTypingLanguage: (lang) => CodeTypingAnimation.setLanguage(lang)
 };
 
-// ==================== Blazor Integration ====================
-siteFunctions.initCodeTypingEffect = function (lang) {
-    CodeTypingAnimation.init(lang);
-};
+// جعل initCodeTypingEffect متاحًا لاستدعاء Blazor التقليدي
+window.initCodeTypingEffect = window.siteFunctions.initCodeTypingEffect;
 
-siteFunctions.setCodeTypingLanguage = function (lang) {
-    CodeTypingAnimation.setLanguage(lang);
+// ==================== تهيئة الصفحة ====================
+window.addEventListener('DOMContentLoaded', () => {
+  // تهيئة الثيم بناءً على القيمة المحفوظة في localStorage
+  ThemeManager.init();
+  
+  // جلب اللغة المحفوظة أو استخدام الإنجليزية افتراضيًا
+  const savedLang = StorageHelper.get('lang') || 'EN';
+  // بدء تأثير الكتابة إذا كان العنصر موجودًا
+  if (document.getElementById('code-typing-text')) {
+    CodeTypingAnimation.init(savedLang);
+  }
+  
+  // إعادة تشغيل تأثير الكتابة عند عودة المستخدم للتبويب
+  document.addEventListener('visibilitychange', () => {
+    CodeTypingAnimation.init();
+  });
+});
+
+StorageHelper.get = function(key) {
+  const value = localStorage.getItem(key);
+  try {
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return value; // fallback: return raw value
+  }
 };

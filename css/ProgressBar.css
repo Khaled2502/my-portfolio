@@ -1,0 +1,15 @@
+﻿/* Progress Bar */
+.progress-container {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 999;
+}
+
+.progress {
+    height: var(--progress-height);
+    border-radius: 0;
+}
+
+.progress-bar {
+    background: var(--progress-color);
+}

@@ -1,0 +1,139 @@
+﻿/* ==================== HEADER & NAVIGATION ==================== */
+.site-header {
+    background-color: var(--header-bg);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 0.5rem 0;
+}
+
+.site-header__logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+}
+
+.site-header__logo-image {
+    border-radius: 50%;
+    margin-right: 0.75rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.site-header__logo:hover .site-header__logo-image {
+    transform: scale(1.05);
+}
+
+.site-header__title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    margin: 0 0.5rem;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: var(--transition-base);
+    position: relative;
+    font-weight: 500;
+}
+
+.nav-link:hover,
+.nav-link--active {
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: white;
+    transition: var(--transition-base);
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after,
+.nav-link--active::after {
+    width: 70%;
+}
+
+.layout-actions {
+    display: flex;
+    margin-left: 1rem;
+}
+
+/* ========== MOBILE NAVIGATION ========== */
+@media (max-width: 991.98px) {
+    .navbar-toggler {
+        display: block;
+        background: none;
+        border: none;
+        font-size: 1.75rem;
+        color: white;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .site-nav {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--header-bg);
+        flex-direction: column;
+        padding: 1rem;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .site-nav--show {
+        max-height: 500px;
+    }
+
+    .navbar-nav {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .nav-item {
+        margin: 0.25rem 0;
+        width: 100%;
+    }
+
+    .nav-link {
+        display: block;
+        padding: 0.75rem;
+    }
+
+    .layout-actions {
+        margin: 1rem 0 0;
+        width: 100%;
+        justify-content: center;
+    }
+}

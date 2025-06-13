@@ -1,0 +1,40 @@
+﻿/* ==================== CUSTOM PROPERTIES ==================== */
+:root {
+    /* Light Theme */
+    --bg-primary: #ffffff;
+    --text-primary: #333333;
+    --header-bg: #007bff;
+    --footer-bg: #212529;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+    --hero-overlay: rgba(0, 0, 0, 0.7);
+    --progress-color: linear-gradient(90deg, #4CAF50, #2196F3);
+
+    /* Typography */
+    --font-main: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-mono: 'Courier New', monospace;
+
+    /* Transitions */
+    --transition-base: all 0.3s ease;
+
+    /* Spacing */
+    --header-height: 70px;
+    --progress-height: 5px;
+}
+
+.dark-mode {
+    /* Dark Theme */
+    --bg-primary: #121212;
+    --text-primary: #e0e0e0;
+    --header-bg: #1e1e1e;
+    --footer-bg: #0d0d0d;
+    --card-bg: #1e1e1e;
+    --border-color: #333;
+    --hero-overlay: rgba(0, 0, 0, 0.9);
+    --progress-color: linear-gradient(90deg, #2E7D32, #1565C0);
+}
+
+.rtl {
+    direction: rtl;
+    text-align: right;
+}

@@ -1,0 +1,7 @@
+﻿/* ==================== UTILITY CLASSES ==================== */
+.text-center { text-align: center; }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.mt-3 { margin-top: 1rem; }
+.py-3 { padding-top: 1rem; padding-bottom: 1rem; }
