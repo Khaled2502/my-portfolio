@@ -14,6 +14,15 @@
         <link rel="stylesheet" href="css/app.css" />
         <link href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic-bootstrap.min.css" rel="stylesheet" />
         <link href="Portfolio.styles.css" rel="stylesheet" />
+        
+        <!-- تهيئة Blazor -->
+        <script>
+            window.blazorInit = new Promise((resolve) => {
+                window.blazorResolve = resolve;
+            });
+        </script>
+
+        <!-- المساعدين -->
         <script>
             window.BlazorCulture = {
                 set: function (value) {
@@ -24,6 +33,7 @@
                 }
             };
         </script>
+        
         <script>
             // تهيئة التحميل الأولي واللغة
             document.addEventListener('DOMContentLoaded', () => {
@@ -32,11 +42,6 @@
                     document.getElementById('bootstrap-rtl').disabled = false;
                     document.documentElement.dir = 'rtl';
                     document.documentElement.lang = 'ar';
-                }
-
-                // تهيئة شريط التحميل
-                if (window.blazorHelpers) {
-                    window.blazorHelpers.initLoader();
                 }
             });
         </script>
@@ -49,9 +54,27 @@
             </svg>
             <div class="loading-progress-text"></div>
         </div>
-        <!-- ملفات JavaScript -->
-        <script src="_framework/blazor.webassembly.js"></script>
-        <script type="module" src="js/site.js"></script>
-        <script src="js/interop.js"></script>
+
+        <div id="blazor-error-ui">
+            An unhandled error has occurred.
+            <a href="" class="reload">Reload</a>
+            <a class="dismiss">🗙</a>
+        </div>
+        
+        <!-- Blazor WebAssembly -->
+        <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+        
+        <!-- تهيئة Blazor -->
+        <script>
+            Blazor.start().then(() => {
+                window.blazorResolve();
+                window.dispatchEvent(new CustomEvent('blazor-load'));
+            });
+        </script>
+        
+        <!-- ملفات JavaScript الخاصة بالتطبيق -->
+        <script src="js/helpers.js" type="module"></script>
+        <script src="js/interop.js" type="module"></script>
+        <script src="js/site.js" type="module"></script>
     </body>
 </html>

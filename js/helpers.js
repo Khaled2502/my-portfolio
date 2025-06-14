@@ -42,13 +42,34 @@ const StorageHelper = {
   }
 };
 
+// دالة للتحقق من جاهزية Blazor
+function blazorReady() {
+    return new Promise((resolve) => {
+        if (window.Blazor && window.Blazor._internal) {
+            resolve();
+        } else {
+            window.addEventListener('blazor-load', () => resolve());
+        }
+    });
+}
+
 // حدث عند انتهاء تحميل الصفحة
-window.addEventListener('load', () => {
-  // تأخير إخفاء شريط التحميل لمدة 500 مللي ثانية
-  setTimeout(() => {
-    // استدعاء دالة من Blazor لإخفاء شريط التحميل
-    DotNet.invokeMethodAsync('Portfolio', 'HideLoader');
-  }, 500);
+window.addEventListener('load', async () => {
+    // انتظار جاهزية Blazor
+    await blazorReady();
+    
+    // تأخير إخفاء شريط التحميل لمدة 500 مللي ثانية
+    setTimeout(() => {
+        try {
+            // استدعاء دالة من Blazor لإخفاء شريط التحميل
+            DotNet.invokeMethodAsync('Portfolio', 'HideLoader');
+        } catch (error) {
+            console.warn('Error hiding loader:', error);
+            // إخفاء شريط التحميل يدويًا في حالة الخطأ
+            document.querySelector('.loading-progress')?.remove();
+            document.querySelector('.loading-progress-text')?.remove();
+        }
+    }, 500);
 });
 
 // تصدير الكائنات ليتم استخدامها في ملفات أخرى
