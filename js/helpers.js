@@ -6,10 +6,9 @@
 const ThemeManager = {
   // دالة لتطبيق الوضع الداكن أو الفاتح
   apply(isDark) {
-    // إضافة أو إزالة كلاس 'dark-mode' من العنصر الرئيسي في الصفحة
     document.documentElement.classList.toggle('dark-mode', isDark);
-    // حفظ الإعداد في localStorage
-    localStorage.setItem('darkMode', isDark);
+    // حفظ الإعداد في localStorage كنص صريح
+    localStorage.setItem('darkMode', isDark ? 'true' : 'false');
   },
   
   // دالة لتهيئة الثيم عند تحميل الصفحة
@@ -25,16 +24,21 @@ const ThemeManager = {
 const StorageHelper = {
   // دالة لحفظ البيانات
   set(key, value) {
-    // تحويل القيمة إلى JSON وحفظها
-    localStorage.setItem(key, JSON.stringify(value));
+    // دائمًا خزّن كنص صريح
+    localStorage.setItem(key, value.toString());
   },
   
-  // دالة لجلب البيانات
+  // دالة لجلب البيانات مع معالجة أفضل للقيم المنطقية
   get(key) {
-    // جلب القيمة من localStorage
     const value = localStorage.getItem(key);
-    // إرجاع القيمة بعد تحويلها من JSON إذا كانت موجودة، أو إرجاع null
-    return value ? JSON.parse(value) : null;
+    // إذا كانت القيمة null، أرجع null
+    if (value === null || value === undefined) return null;
+    // إذا كانت القيمة تمثل boolean، أرجع القيمة المنطقية
+    if (value === 'true' || value === 'false') {
+      return value === 'true';
+    }
+    // في باقي الحالات، أرجع القيمة كما هي
+    return value;
   }
 };
 

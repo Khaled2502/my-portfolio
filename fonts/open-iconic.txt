@@ -1,0 +1,12 @@
+يرجى تنزيل ملفات خطوط Open Iconic التالية ووضعها في هذا المجلد:
+
+- open-iconic.eot
+- open-iconic.woff
+- open-iconic.ttf
+- open-iconic.otf
+- open-iconic.svg
+
+يمكنك تحميلها من الريبو الرسمي:
+https://github.com/iconic/open-iconic/tree/master/font
+
+بعد وضع الملفات هنا ستعمل الأيقونات بشكل صحيح على جميع الأجهزة.
